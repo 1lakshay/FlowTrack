@@ -1,0 +1,7 @@
+[project]
+name = "vs-code-extension-function-resume-changing"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []

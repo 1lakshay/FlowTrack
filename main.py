@@ -5,11 +5,14 @@ import json
 from pathlib import Path
 from typing import Dict
 import logging as lg 
+from dotenv import load_dotenv
+
+load_dotenv()
 
 lg.basicConfig(level=lg.INFO, format="%(levelname)s: %(message)s")
 
-FUNCTION_HASH_FILE_NAME = "function_hashes.json"
-FUNCTION_CALLING_RECORD = "function_call_record.json"
+FUNCTION_HASH_FILE_NAME = os.getenv("FUNCTION_HASH_FILE_NAME")
+FUNCTION_CALLING_RECORD = os.getenv("FUNCTION_CALLING_RECORD")
 
 functions_that_are_changed = []
 notify_about_function_behaviour = []

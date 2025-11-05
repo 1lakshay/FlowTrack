@@ -6,6 +6,10 @@ dist/
 wheels/
 *.egg-info
 
+# no-use files
+temp_seeing_ast_repr.py
+making_secret_key.py
+
 # Virtual environments
 .venv
 
@@ -14,3 +18,7 @@ wheels/
 
 # storage files 
 function_hashes.json
+.FlowTrack
+
+# workspace settings
+.vscode/

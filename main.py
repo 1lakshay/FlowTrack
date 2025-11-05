@@ -1,3 +1,4 @@
+import ctypes
 import os 
 import ast
 import hashlib
@@ -13,6 +14,9 @@ lg.basicConfig(level=lg.INFO, format="%(levelname)s: %(message)s")
 
 FUNCTION_HASH_FILE_NAME = os.getenv("FUNCTION_HASH_FILE_NAME")
 FUNCTION_CALLING_RECORD = os.getenv("FUNCTION_CALLING_RECORD")
+
+print(f"FUNCTION_HASH_FILE_NAME = {FUNCTION_HASH_FILE_NAME}")
+print(f"FUNCTION_CALLING_RECORD = {FUNCTION_CALLING_RECORD}")
 
 functions_that_are_changed = []
 notify_about_function_behaviour = []
@@ -87,8 +91,11 @@ if __name__ == "__main__":
     if not os.path.exists(FUNCTION_HASH_FILE_NAME):
         lg.info("creating the new function hash file")
         output_path_for_hash = Path(FUNCTION_HASH_FILE_NAME)
+        output_path_for_hash.parent.mkdir(parents=True, exist_ok=True) 
+        ctypes.windll.kernel32.SetFileAttributesW(str(output_path_for_hash.parent), 0x02)
         output_path_for_hash.write_text(json.dumps(result, indent=4))
         print(f"✅ Hashes saved to {output_path_for_hash.resolve()}")
+    
     else:
         # - here their is no Logic of reading the currently made file as their will be no back version for comparison
         # - when the hash funciton is already present, then checking if the hash is changed, if yes the do overwrite & if not present then 

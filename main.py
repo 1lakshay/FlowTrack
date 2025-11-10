@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Dict
 import logging as lg 
 from dotenv import load_dotenv
+from core.hashing import get_function_hashes
+from core.relations import extract_call_relations
 
 load_dotenv()
 
@@ -20,70 +22,6 @@ print(f"FUNCTION_CALLING_RECORD = {FUNCTION_CALLING_RECORD}")
 
 functions_that_are_changed = []
 notify_about_function_behaviour = []
-
-class FunctionCallExtractor(ast.NodeVisitor):
-    def __init__(self):
-        self.calls = set()
-
-    def visit_Call(self, node):
-        # Check if the function being called is a simple name like foo()
-        if isinstance(node.func, ast.Name):
-            self.calls.add(node.func.id)
-        self.generic_visit(node)
-
-class LogicNormalizer(ast.NodeTransformer):
-    """Remove cosmetic or debug statements before hashing."""
-
-    def visit_Expr(self, node):
-        # Remove print() and logging statements
-        if isinstance(node.value, ast.Call):
-            func = node.value.func
-            if isinstance(func, ast.Name) and func.id in {"print", "logger", "logging"}:
-                return None
-        return self.generic_visit(node)
-
-    def visit_Constant(self, node):
-        # Replace literal constants with placeholders
-        if isinstance(node.value, (str, int, float, bool, complex)):
-            return ast.copy_location(ast.Constant(value=None), node)
-        return node
-
-def extract_call_relations(filepath: str):
-    lg.info("Extracting call-relations")
-    source = Path(filepath).read_text(encoding="utf-8")
-    tree = ast.parse(source)
-
-    call_relations = {}  # {called_function: [caller_function1, caller_function2]}
-
-    for node in tree.body:
-        if isinstance(node, ast.FunctionDef):
-            caller_name = node.name
-            extractor = FunctionCallExtractor()
-            extractor.visit(node)
-
-            for called_func in extractor.calls:
-                call_relations.setdefault(called_func, []).append(caller_name)
-
-    return call_relations
-
-def get_function_hashes(filepath: str) -> Dict:
-    """Return a dict of {function_name: logic_hash} for a Python file."""
-    lg.info(f"Extracting function hashing")
-    source = Path(filepath).read_text(encoding="utf-8")
-    tree = ast.parse(source)
-    normalizer = LogicNormalizer()
-    hashes = {}
-
-    for node in tree.body:
-        if isinstance(node, ast.FunctionDef):
-            # normalize function AST (ignore print/log/constants)
-            clean_func = normalizer.visit(ast.fix_missing_locations(node))
-            ast_repr = ast.dump(clean_func, include_attributes=False)
-            func_hash = hashlib.sha256(ast_repr.encode()).hexdigest()
-            hashes[node.name] = func_hash
-
-    return hashes
-
 
 if __name__ == "__main__":
     file_path = "code_to_parse.py"   
@@ -124,7 +62,7 @@ if __name__ == "__main__":
     if not os.path.exists(FUNCTION_HASH_FILE_NAME):
         output_path_for_calling = Path(FUNCTION_CALLING_RECORD)
         output_path_for_calling.write_text(json.dumps(call_relations, indent=4))
-        print(f"✅ Call relations saved to {output_path_for_calling.resolve()}")
+        print(f"call relations saved to {output_path_for_calling.resolve()}")
     
     # - read this file no matter if it is bening created or not, as this don't matter like in the function hash files, 
     if len(functions_that_are_changed) > 0:    

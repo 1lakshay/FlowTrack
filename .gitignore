@@ -19,6 +19,3 @@ making_secret_key.py
 # storage files 
 function_hashes.json
 .FlowTrack
-
-# workspace settings
-.vscode/

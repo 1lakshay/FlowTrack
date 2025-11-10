@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "ms-python.python",        // Python support
+    "emeraldwalk.RunOnSave"    // auto-run on save
+  ],
+  "unwantedRecommendations": []
+}

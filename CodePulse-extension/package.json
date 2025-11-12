@@ -1,0 +1,22 @@
+{
+  "name": "codepulse",
+  "displayName": "CodePulse",
+  "description": "Monitors function logic changes to prevent runtime crashes in dependent code.",
+  "version": "0.0.1",
+  "publisher": "Lakshay",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.js",
+  "contributes": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/1lakshay/CodePulse"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages",
+    "Linters"
+  ]
+}

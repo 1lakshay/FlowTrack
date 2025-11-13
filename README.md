@@ -6,3 +6,4 @@ This is the work-in progress open source code extension, to mark the logical cha
 ### TODO: 
 
 #### - Add more robust constraints for ignoring features that contribute that if the function is beign changed or not. 
+#### - FIx logic for tracking changes among different files

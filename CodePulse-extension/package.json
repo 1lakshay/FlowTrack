@@ -9,11 +9,25 @@
   },
   "activationEvents": ["onStartupFinished"],
   "main": "./extension.js",
-  "contributes": {},
+
+  "contributes": {
+    "configuration": {
+      "title": "CodePulse Settings",
+      "properties": {
+        "codePulse.watchFiles": {
+          "type": "array",
+          "default": ["code_to_parse.py", "code_to_parse_1.py"],
+          "description": "List of Python files CodePulse should monitor for function-logic changes."
+        }
+      }
+    }
+  },
+
   "repository": {
     "type": "git",
     "url": "https://github.com/1lakshay/CodePulse"
   },
+
   "categories": [
     "Other",
     "Programming Languages",

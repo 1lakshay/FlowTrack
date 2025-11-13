@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from core.hashing import get_function_hashes
 from core.relations import extract_call_relations
 from core.syntaxvalidation import is_syntax_valid
+import sys
 
 load_dotenv()
 
@@ -26,40 +27,47 @@ notify_about_function_behaviour = []
 
 if __name__ == "__main__":
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(BASE_DIR, "code_to_parse.py")
-    if not is_syntax_valid(file_path):
-        print("SYNTAX_INVALID")
-        exit(0)
-    result = get_function_hashes(file_path)
-    if not os.path.exists(FUNCTION_HASH_FILE_NAME):
-        # lg.info("creating the new function hash file")
-        output_path_for_hash = Path(FUNCTION_HASH_FILE_NAME)
-        output_path_for_hash.parent.mkdir(parents=True, exist_ok=True) 
-        ctypes.windll.kernel32.SetFileAttributesW(str(output_path_for_hash.parent), 0x02)
-        output_path_for_hash.write_text(json.dumps(result, indent=4))
-        print(f"✅ Hashes saved to {output_path_for_hash.resolve()}")
-    
-    else:
-        # - here their is no Logic of reading the currently made file as their will be no back version for comparison
-        # - when the hash funciton is already present, then checking if the hash is changed, if yes the do overwrite & if not present then 
-        #   do make a entry of it
-        # lg.info("reading the pre-made function hash file")
-        extr_result = json.loads(Path(FUNCTION_HASH_FILE_NAME).read_text())
-        for key,val in result.items():
-            if key in extr_result:
-                # lg.info("pre-made function hash is being found")
-                if val != extr_result[key]:
-                    # lg.info("function is being changed, hence updating")
-                    functions_that_are_changed.append(key)
-                    extr_result[key] = val
-                else:
-                    pass
-            else:
-                # lg.info("function hash is not found, hence adding it in function's hash-file")
-                extr_result[key] = val
 
-        # - writing file 
-        Path(FUNCTION_HASH_FILE_NAME).write_text(json.dumps(extr_result, indent=4))
+    input_files = sys.argv[1:]  # Get input files from command-line arguments
+    if not input_files:
+        print("No input files provided.")
+        exit(0)
+
+    file_paths = [os.path.join(BASE_DIR, f) for f in input_files]
+    for file_path in file_paths:
+        if not is_syntax_valid(file_path):
+            print("SYNTAX_INVALID")
+            exit(0)
+        result = get_function_hashes(file_path)
+        if not os.path.exists(FUNCTION_HASH_FILE_NAME):
+            # lg.info("creating the new function hash file")
+            output_path_for_hash = Path(FUNCTION_HASH_FILE_NAME)
+            output_path_for_hash.parent.mkdir(parents=True, exist_ok=True) 
+            ctypes.windll.kernel32.SetFileAttributesW(str(output_path_for_hash.parent), 0x02)
+            output_path_for_hash.write_text(json.dumps(result, indent=4))
+            print(f"✅ Hashes saved to {output_path_for_hash.resolve()}")
+        
+        else:
+            # - here their is no Logic of reading the currently made file as their will be no back version for comparison
+            # - when the hash funciton is already present, then checking if the hash is changed, if yes the do overwrite & if not present then 
+            #   do make a entry of it
+            # lg.info("reading the pre-made function hash file")
+            extr_result = json.loads(Path(FUNCTION_HASH_FILE_NAME).read_text())
+            for key,val in result.items():
+                if key in extr_result:
+                    # lg.info("pre-made function hash is being found")
+                    if val != extr_result[key]:
+                        # lg.info("function is being changed, hence updating")
+                        functions_that_are_changed.append(key)
+                        extr_result[key] = val
+                    else:
+                        pass
+                else:
+                    # lg.info("function hash is not found, hence adding it in function's hash-file")
+                    extr_result[key] = val
+
+            # - writing file 
+            Path(FUNCTION_HASH_FILE_NAME).write_text(json.dumps(extr_result, indent=4))
 
     print(json.dumps(result, indent=4))
 

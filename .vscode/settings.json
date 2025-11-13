@@ -4,7 +4,7 @@
       {
         // Run whenever any file is saved
         "match": "code_to_parse\\.py*",
-        "cmd": "python main.py", 
+        "cmd": "echo 'run on save triggered'", 
         "silent": false, 
 
       }

@@ -9,6 +9,7 @@ import logging as lg
 from dotenv import load_dotenv
 from core.hashing import get_function_hashes
 from core.relations import extract_call_relations
+from core.syntaxvalidation import is_syntax_valid
 
 load_dotenv()
 

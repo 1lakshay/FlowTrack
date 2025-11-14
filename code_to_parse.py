@@ -4,6 +4,7 @@ import ast
 
 def funct2():
     d = 10+2+2
+    cc = 99
     return d
 
 

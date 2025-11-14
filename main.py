@@ -19,11 +19,17 @@ lg.basicConfig(level=lg.INFO, format="%(levelname)s: %(message)s")
 FUNCTION_HASH_FILE_NAME = os.getenv("FUNCTION_HASH_FILE_NAME")
 FUNCTION_CALLING_RECORD = os.getenv("FUNCTION_CALLING_RECORD")
 
+global_call_relations = {}
+
 print(f"FUNCTION_HASH_FILE_NAME = {FUNCTION_HASH_FILE_NAME}")
 print(f"FUNCTION_CALLING_RECORD = {FUNCTION_CALLING_RECORD}")
 
 functions_that_are_changed = []
 notify_about_function_behaviour = []
+
+def unique(seq):
+    """Return list with duplicates removed while preserving order."""
+    return list(dict.fromkeys(seq))
 
 if __name__ == "__main__":
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -35,6 +41,7 @@ if __name__ == "__main__":
 
     file_paths = [os.path.join(BASE_DIR, f) for f in input_files]
     for file_path in file_paths:
+        print(f"99 - file path = {file_path}")
         if not is_syntax_valid(file_path):
             print("SYNTAX_INVALID")
             exit(0)
@@ -69,19 +76,25 @@ if __name__ == "__main__":
             # - writing file 
             Path(FUNCTION_HASH_FILE_NAME).write_text(json.dumps(extr_result, indent=4))
 
-    print(json.dumps(result, indent=4))
+        # extract relations for this file and MERGE into global_call_relations
+        call_relations = extract_call_relations(file_path)
 
-    call_relations = extract_call_relations(file_path)
-    if not os.path.exists(FUNCTION_HASH_FILE_NAME):
-        output_path_for_calling = Path(FUNCTION_CALLING_RECORD)
-        output_path_for_calling.write_text(json.dumps(call_relations, indent=4))
-        print(f"call relations saved to {output_path_for_calling.resolve()}")
+        # merge while preserving caller order and avoiding duplicates
+        for called_fn, callers in call_relations.items():
+            existing_callers = global_call_relations.get(called_fn, [])
+            # append callers preserving order, avoid duplicates
+            for c in callers:
+                if c not in existing_callers:
+                    existing_callers.append(c)
+            global_call_relations[called_fn] = existing_callers
     
-    # - read this file no matter if it is bening created or not, as this don't matter like in the function hash files, 
+    # dedupe changed-functions while preserving order
+    functions_that_are_changed = unique(functions_that_are_changed)
+
     if len(functions_that_are_changed) > 0:
         for function in functions_that_are_changed:
             print(f"function = {function}")
-            val_found = call_relations.get(function, [])
+            val_found = global_call_relations.get(function, [])
             if val_found:
                 print(f"inside = {val_found}")
                 for i in val_found:
@@ -89,9 +102,15 @@ if __name__ == "__main__":
             else:
                 pass
 
-    print(json.dumps(call_relations, indent=4))
+    print(json.dumps(result, indent=4))
+
+    # print(json.dumps(call_relations, indent=4))
 
 print(f"functions_that_are_changed = {functions_that_are_changed}")
+
+# dedupe notify list and preserve order
+notify_about_function_behaviour = unique(notify_about_function_behaviour)
+
 print(f"notify_about_function_behaviour = {notify_about_function_behaviour}")
 
 if notify_about_function_behaviour:

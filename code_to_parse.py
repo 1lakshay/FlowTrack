@@ -4,7 +4,7 @@ import ast
 
 def funct2():
     d = 10+2+2
-    f = 90
+    hi = 90
     return d
 
 
@@ -20,4 +20,5 @@ def func1():
     return c 
 
 def f4():
+    aa = 89
     ans = funct2()

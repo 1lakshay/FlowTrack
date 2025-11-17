@@ -6,32 +6,48 @@ function activate() {
   const ws = vscode.workspace.workspaceFolders?.[0];
   if (!ws) return;
 
-  const script = path.join(ws.uri.fsPath, "main.py");
+  const workspaceRoot = ws.uri.fsPath;
+  const script = path.join(workspaceRoot, "main.py");
 
-  // 🧩 Read the list of watched files from VS Code settings
+  // Read settings
   const config = vscode.workspace.getConfiguration("codePulse");
   let watchFiles = config.get("watchFiles") || [];
-  console.log("CodePulse watching files:", watchFiles);
+  console.log("CodePulse watching:", watchFiles);
+
+  // Convert all watch entries to absolute normalized paths
+  const absoluteWatchPaths = watchFiles.map((item) =>
+    path.normalize(path.isAbsolute(item) ? item : path.join(workspaceRoot, item))
+  );
+
+  console.log("Absolute watch paths:", absoluteWatchPaths);
 
   vscode.workspace.onDidSaveTextDocument((doc) => {
-    const fileName = path.basename(doc.fileName);
+    const saved = path.normalize(doc.fileName);
 
-    // 🛑 Skip if no watch files defined
-    if (!watchFiles || watchFiles.length === 0) {
+    // Check if saved file matches ANY watched file/directory
+    const isWatched = absoluteWatchPaths.some((watchPath) => {
+      // If watchPath is a directory → match any .py file inside it
+      if (
+        watchPath.endsWith(path.sep) ||
+        !path.extname(watchPath) // no extension → treat as directory
+      ) {
+        return saved.startsWith(watchPath);
+      }
+
+      // Exact file match
+      return saved === watchPath;
+    });
+
+    if (!isWatched) {
+      console.log("Skipped, file not in watch list:", saved);
       return;
     }
 
-    // 🛑 Only run when this saved file is in the watch list
-    if (!watchFiles.includes(fileName)) {
-      return;
-    }
-
-    // 🧩 Quote and escape each filename safely
-    const fileArgs = watchFiles
+    // Build python args for *every* watched file/directory
+    const fileArgs = absoluteWatchPaths
       .map((f) => `"${f.replace(/"/g, '\\"')}"`)
       .join(" ");
 
-    // 🧩 Build command: python main.py <file1> <file2> <file3>
     const cmd = `python "${script}" ${fileArgs}`;
     console.log("Executing:", cmd);
 
@@ -43,34 +59,27 @@ function activate() {
 
       console.log("PYTHON OUTPUT:\n", stdout);
 
-      // Skip analysis if syntax is invalid
       if (stdout.includes("SYNTAX_INVALID")) {
-        console.log("⏸️ Skipped run: file syntax invalid (user still typing).");
+        console.log("⏸️ Skipped run: syntax invalid.");
         return;
       }
 
-      // 🧩 Look for NOTIFY_FUNCTIONS in the Python output
+      // Parse notify output
       const match = stdout.match(/NOTIFY_FUNCTIONS:\s*(\[.*\])/);
       if (match) {
         try {
           const functions = JSON.parse(match[1]);
-          console.log("Detected functions:", functions);
-
           if (functions.length > 0) {
             const prettyList = functions.map((f) => `• ${f}`).join("\n");
 
             vscode.window.showWarningMessage(
-              `🧠  CodePulse detected logic changes\n\nReview affected functions:\n${prettyList}`,
+              `🧠 CodePulse detected logic changes\n\nReview affected functions:\n${prettyList}`,
               "OK"
             );
-          } else {
-            vscode.window.showInformationMessage("✅ CodePulse: No function changes detected.");
           }
         } catch (e) {
           vscode.window.showErrorMessage("CodePulse: Failed to parse NOTIFY_FUNCTIONS output.");
         }
-      } else {
-        console.log("No NOTIFY_FUNCTIONS found in output.");
       }
     });
   });

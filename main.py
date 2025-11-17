@@ -34,12 +34,27 @@ def unique(seq):
 if __name__ == "__main__":
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    input_files = sys.argv[1:]  # Get input files from command-line arguments
-    if not input_files:
+    input_paths = sys.argv[1:]
+    if not input_paths:
         print("No input files provided.")
         exit(0)
 
-    file_paths = [os.path.join(BASE_DIR, f) for f in input_files]
+    file_paths = []
+
+    for p in input_paths:
+        full_path = os.path.join(BASE_DIR, p)
+
+        if os.path.isfile(full_path) and full_path.endswith(".py"):
+            file_paths.append(full_path)
+
+        elif os.path.isdir(full_path):
+            for root, dirs, files in os.walk(full_path):
+                for f in files:
+                    if f.endswith(".py"):
+                        file_paths.append(os.path.join(root, f))
+        else:
+            print(f"Skipping invalid path: {p}")    
+
     for file_path in file_paths:
         print(f"99 - file path = {file_path}")
         if not is_syntax_valid(file_path):

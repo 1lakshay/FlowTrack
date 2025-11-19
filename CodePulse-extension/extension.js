@@ -70,12 +70,17 @@ function activate() {
         try {
           const functions = JSON.parse(match[1]);
           if (functions.length > 0) {
-            const prettyList = functions.map((f) => `• ${f}`).join("\n");
+            // const prettyList = functions.map((f) => `• ${f}`).join("\n");
+            const prettyList = functions
+              .map(item => `• ${item.file} → ${item.function}`)
+              .join("\n");
+
 
             vscode.window.showWarningMessage(
               `🧠 CodePulse detected logic changes\n\nReview affected functions:\n${prettyList}`,
               "OK"
             );
+
           }
         } catch (e) {
           vscode.window.showErrorMessage("CodePulse: Failed to parse NOTIFY_FUNCTIONS output.");

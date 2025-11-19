@@ -4,7 +4,6 @@ import ast
 
 def funct2():
     d = 10+2+2
-    hi = 90
     return d
 
 

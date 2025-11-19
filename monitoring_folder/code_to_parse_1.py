@@ -5,7 +5,6 @@ def helper():
     return a 
 
 def caller():
-    t = 56
     result = helper()
     ans_1 = funct2()
     print(result)

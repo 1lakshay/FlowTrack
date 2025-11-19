@@ -68,6 +68,8 @@ if __name__ == "__main__":
             ctypes.windll.kernel32.SetFileAttributesW(str(output_path_for_hash.parent), 0x02)
             output_path_for_hash.write_text(json.dumps(result, indent=4))
             print(f"✅ Hashes saved to {output_path_for_hash.resolve()}")
+            # print(f"[OK] Hashes saved to {output_path_for_hash.resolve()}")
+
         
         else:
             # - here their is no Logic of reading the currently made file as their will be no back version for comparison
@@ -106,25 +108,35 @@ if __name__ == "__main__":
     # dedupe changed-functions while preserving order
     functions_that_are_changed = unique(functions_that_are_changed)
 
+    already_checked_function = set()
+
     if len(functions_that_are_changed) > 0:
         for function in functions_that_are_changed:
-            print(f"function = {function}")
-            val_found = global_call_relations.get(function, [])
-            if val_found:
-                print(f"inside = {val_found}")
-                for i in val_found:
-                    notify_about_function_behaviour.append(i)
-            else:
-                pass
+            callers = global_call_relations.get(function, [])
+            for caller in callers:
+                notify_about_function_behaviour.append({
+                    "function": caller,
+                    "file": os.path.basename(file_path)   # associate with file where this call was found
+                })
 
+    # remove duplicates by converting each dict to a tuple key
+    seen = set()
+    unique_list = []
+
+    for item in notify_about_function_behaviour:
+        key = (item["file"], item["function"])
+        if key not in seen:
+            seen.add(key)
+            unique_list.append(item)
+
+    notify_about_function_behaviour = unique_list
+
+    print(f"already_checked_function = {already_checked_function}")
+    print(f"notify_about_function_behaviour = {notify_about_function_behaviour}")
+           
     print(json.dumps(result, indent=4))
 
-    # print(json.dumps(call_relations, indent=4))
-
 print(f"functions_that_are_changed = {functions_that_are_changed}")
-
-# dedupe notify list and preserve order
-notify_about_function_behaviour = unique(notify_about_function_behaviour)
 
 print(f"notify_about_function_behaviour = {notify_about_function_behaviour}")
 

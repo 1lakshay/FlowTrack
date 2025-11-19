@@ -5,5 +5,5 @@ This is the work-in progress open source code extension, to mark the logical cha
 
 ### TODO: 
 
-#### - Add more robust constraints for ignoring features that contribute that if the function is beign changed or not. 
-#### - add function with path, for accurate findong of funtions
+#### - Add more robust constraints for ignoring features that contribute that if the function is beign changed or not.
+#### - find another options to make notification easy to read and interpret

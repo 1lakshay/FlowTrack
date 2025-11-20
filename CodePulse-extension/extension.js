@@ -21,20 +21,34 @@ function activate() {
 
   console.log("Absolute watch paths:", absoluteWatchPaths);
 
+  // ⭐ Create Status Bar Item
+  const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
+  statusBarItem.command = "codePulse.showDetails";
+  statusBarItem.hide();
+
+  // ⭐ Command to show expanded view
+  vscode.commands.registerCommand("codePulse.showDetails", async () => {
+    if (!statusBarItem._message) return;
+
+    const pressed = await vscode.window.showInformationMessage(
+      statusBarItem._message,
+      "Dismiss"
+    );
+
+    if (pressed === "Dismiss") {
+      statusBarItem.hide();
+      statusBarItem._message = "";
+    }
+  });
+
   vscode.workspace.onDidSaveTextDocument((doc) => {
     const saved = path.normalize(doc.fileName);
 
-    // Check if saved file matches ANY watched file/directory
+    // Match file/directory
     const isWatched = absoluteWatchPaths.some((watchPath) => {
-      // If watchPath is a directory → match any .py file inside it
-      if (
-        watchPath.endsWith(path.sep) ||
-        !path.extname(watchPath) // no extension → treat as directory
-      ) {
+      if (watchPath.endsWith(path.sep) || !path.extname(watchPath)) {
         return saved.startsWith(watchPath);
       }
-
-      // Exact file match
       return saved === watchPath;
     });
 
@@ -43,7 +57,7 @@ function activate() {
       return;
     }
 
-    // Build python args for *every* watched file/directory
+    // Build Python args
     const fileArgs = absoluteWatchPaths
       .map((f) => `"${f.replace(/"/g, '\\"')}"`)
       .join(" ");
@@ -64,23 +78,41 @@ function activate() {
         return;
       }
 
-      // Parse notify output
+      // Extract NOTIFY_FUNCTIONS
       const match = stdout.match(/NOTIFY_FUNCTIONS:\s*(\[.*\])/);
+
       if (match) {
         try {
           const functions = JSON.parse(match[1]);
+
           if (functions.length > 0) {
-            // const prettyList = functions.map((f) => `• ${f}`).join("\n");
-            const prettyList = functions
-              .map(item => `• ${item.file} → ${item.function}`)
-              .join("\n");
 
+            // ⭐⭐ NEW BLOCK — GROUP BY FILE ⭐⭐
+            const grouped = {};
+            functions.forEach(({ file, function: fn }) => {
+              if (!grouped[file]) grouped[file] = [];
+              grouped[file].push(fn);
+            });
 
-            vscode.window.showWarningMessage(
-              `🧠 CodePulse detected logic changes\n\nReview affected functions:\n${prettyList}`,
-              "OK"
-            );
+            let prettyList = "";
+            for (const file in grouped) {
+              prettyList += `▸ ${file}\n`;       // collapsible arrow
+              grouped[file].forEach(fn => {
+                prettyList += `   • ${fn}\n`;
+              });
+              prettyList += "\n";
+            }
+            // ⭐⭐ END BLOCK ⭐⭐
 
+            // ⭐ Update the status bar
+            statusBarItem.text = "🚨 CodePulse Alert";
+            statusBarItem.tooltip = "Click to view affected functions";
+            statusBarItem._message =
+              `🧠 CodePulse detected logic changes\n\n${prettyList}`;
+
+            statusBarItem.show();
+          } else {
+            statusBarItem.hide();
           }
         } catch (e) {
           vscode.window.showErrorMessage("CodePulse: Failed to parse NOTIFY_FUNCTIONS output.");

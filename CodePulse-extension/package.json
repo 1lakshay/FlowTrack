@@ -17,7 +17,7 @@
         "codePulse.watchFiles": {
           "type": "array",
           "default": [],
-          "description": "List of Python files CodePulse should monitor for function-logic changes."
+          "description": "List of Python files CodePulse should monitor for functional-logic changes."
         }
       }
     }

@@ -1,6 +1,14 @@
 """function file to read and parse the AST of it"""
 
 import ast
+class SomeClass:
+    def __init__(self):
+        self.val = 10
+
+    def some_method(self):
+        return self.val * 2
+
+obj = SomeClass()
 
 def funct2():
     d = 10+2+2
@@ -22,4 +30,6 @@ def func1():
 def f4():
     aa = 89
     fh = 66
+    gg = obj.some_method()
     ans = funct2()
+

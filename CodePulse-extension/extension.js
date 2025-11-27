@@ -18,46 +18,46 @@ function activate() {
   const absoluteWatchPaths = watchFiles.map((item) =>
     path.normalize(path.isAbsolute(item) ? item : path.join(workspaceRoot, item))
   );
-
   console.log("Absolute watch paths:", absoluteWatchPaths);
 
-  // ⭐ Create Status Bar Item
+  // ⭐ Create status bar item
   const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
   statusBarItem.command = "codePulse.showDetails";
   statusBarItem.hide();
 
-  // ⭐ Command to show expanded view
-  vscode.commands.registerCommand("codePulse.showDetails", async () => {
-    if (!statusBarItem._message) return;
+  let lastGroupedOutput = "";   // store HTML content for webview
 
-    const pressed = await vscode.window.showInformationMessage(
-      statusBarItem._message,
-      "Dismiss"
+  // ⭐ Register command to open Webview Panel
+  vscode.commands.registerCommand("codePulse.showDetails", () => {
+    if (!lastGroupedOutput) return;
+
+    const panel = vscode.window.createWebviewPanel(
+      "codePulseDetails",
+      "CodePulse – Affected Functions",
+      vscode.ViewColumn.Beside,
+      { enableScripts: true }
     );
 
-    if (pressed === "Dismiss") {
+    panel.webview.html = getWebviewHtml(lastGroupedOutput);
+
+    panel.onDidDispose(() => {
       statusBarItem.hide();
-      statusBarItem._message = "";
-    }
+    });
   });
 
   vscode.workspace.onDidSaveTextDocument((doc) => {
     const saved = path.normalize(doc.fileName);
 
-    // Match file/directory
+    // Check if saved file matches ANY watched file/directory
     const isWatched = absoluteWatchPaths.some((watchPath) => {
-      if (watchPath.endsWith(path.sep) || !path.extname(watchPath)) {
+      if (watchPath.endsWith(path.sep) || !path.extname(watchPath))
         return saved.startsWith(watchPath);
-      }
       return saved === watchPath;
     });
 
-    if (!isWatched) {
-      console.log("Skipped, file not in watch list:", saved);
-      return;
-    }
+    if (!isWatched) return;
 
-    // Build Python args
+    // Build python args
     const fileArgs = absoluteWatchPaths
       .map((f) => `"${f.replace(/"/g, '\\"')}"`)
       .join(" ");
@@ -65,51 +65,34 @@ function activate() {
     const cmd = `python "${script}" ${fileArgs}`;
     console.log("Executing:", cmd);
 
-    exec(cmd, (err, stdout, stderr) => {
+    exec(cmd, (err, stdout) => {
       if (err) {
         vscode.window.showErrorMessage(`CodePulse error: ${err.message}`);
         return;
       }
 
-      console.log("PYTHON OUTPUT:\n", stdout);
+      if (stdout.includes("SYNTAX_INVALID")) return;
 
-      if (stdout.includes("SYNTAX_INVALID")) {
-        console.log("⏸️ Skipped run: syntax invalid.");
-        return;
-      }
-
-      // Extract NOTIFY_FUNCTIONS
+      // Parse notify output
       const match = stdout.match(/NOTIFY_FUNCTIONS:\s*(\[.*\])/);
-
       if (match) {
         try {
           const functions = JSON.parse(match[1]);
 
           if (functions.length > 0) {
-
-            // ⭐⭐ NEW BLOCK — GROUP BY FILE ⭐⭐
+            // ⭐ Group output by file
             const grouped = {};
             functions.forEach(({ file, function: fn }) => {
               if (!grouped[file]) grouped[file] = [];
               grouped[file].push(fn);
             });
 
-            let prettyList = "";
-            for (const file in grouped) {
-              prettyList += `▸ ${file}\n`;       // collapsible arrow
-              grouped[file].forEach(fn => {
-                prettyList += `   • ${fn}\n`;
-              });
-              prettyList += "\n";
-            }
-            // ⭐⭐ END BLOCK ⭐⭐
+            // ⭐ Generate Expandable HTML for Webview
+            lastGroupedOutput = buildExpandableHtml(grouped);
 
-            // ⭐ Update the status bar
+            // ⭐ Show Status Bar Alert
             statusBarItem.text = "🚨 CodePulse Alert";
             statusBarItem.tooltip = "Click to view affected functions";
-            statusBarItem._message =
-              `🧠 CodePulse detected logic changes\n\n${prettyList}`;
-
             statusBarItem.show();
           } else {
             statusBarItem.hide();
@@ -127,3 +110,38 @@ function activate() {
 function deactivate() {}
 
 module.exports = { activate, deactivate };
+
+
+// ------------------------
+// ⭐ HTML for expandable view
+// ------------------------
+function getWebviewHtml(content) {
+  return `
+    <html>
+    <body style="font-family: sans-serif; padding: 15px;">
+      <h2>🧠 CodePulse – Affected Functions</h2>
+      ${content}
+    </body>
+    </html>
+  `;
+}
+
+// ------------------------
+// ⭐ Build expandable sections per file
+// ------------------------
+function buildExpandableHtml(grouped) {
+  let html = "";
+
+  for (const file in grouped) {
+    html += `
+      <details style="margin-bottom: 10px;">
+        <summary style="font-size: 14px; font-weight: bold;">${file}</summary>
+        <ul>
+          ${grouped[file].map(fn => `<li>${fn}</li>`).join("")}
+        </ul>
+      </details>
+    `;
+  }
+
+  return html;
+}

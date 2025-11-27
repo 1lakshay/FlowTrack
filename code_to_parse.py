@@ -4,6 +4,7 @@ import ast
 
 def funct2():
     d = 10+2+2
+    jj = 99
     return d
 
 
@@ -20,4 +21,5 @@ def func1():
 
 def f4():
     aa = 89
+    fh = 66
     ans = funct2()

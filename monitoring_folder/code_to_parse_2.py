@@ -5,4 +5,5 @@ def another_helper():
     a = f4()
     another = helper()
     jj = 88
+    bc = caller()
     print("done")

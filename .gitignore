@@ -14,7 +14,7 @@ making_secret_key.py
 .venv
 
 # env file
-.env
+
 
 # storage files 
 function_hashes.json

@@ -6,13 +6,13 @@ class SomeClass:
         self.val = 10
 
     def some_method(self):
+        ht = 88
         return self.val * 2
 
 obj = SomeClass()
 
 def funct2():
     d = 10+2+2
-    jj = 99
     return d
 
 

@@ -1,0 +1,19 @@
+# Ignore IDE junk
+.vscode/
+__pycache__/
+**/__pycache__/
+
+# Ignore Python compiled files
+*.pyc
+
+# Ignore environment folders
+.venv/
+venv/
+env/
+
+# Ignore testing folders (if you don’t want them)
+monitoring_folder/
+to_tracking/
+
+# Ignore pack (optional)
+pack/

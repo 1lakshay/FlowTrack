@@ -13,13 +13,11 @@ load_dotenv()
 
 lg.basicConfig(level=lg.INFO, format="%(levelname)s: %(message)s")
 
-FUNCTION_HASH_FILE_NAME = os.getenv("FUNCTION_HASH_FILE_NAME")
-FUNCTION_CALLING_RECORD = os.getenv("FUNCTION_CALLING_RECORD")
+FUNCTION_HASH_FILE_NAME = ".FlowTrack/function_hashes.json"
 
 global_call_relations = {}
 
 print(f"FUNCTION_HASH_FILE_NAME = {FUNCTION_HASH_FILE_NAME}")
-print(f"FUNCTION_CALLING_RECORD = {FUNCTION_CALLING_RECORD}")
 
 functions_that_are_changed = []
 notify_about_function_behaviour = []
@@ -39,7 +37,8 @@ if __name__ == "__main__":
     file_paths = []
 
     for p in input_paths:
-        full_path = os.path.join(BASE_DIR, p)
+        # full_path = os.path.join(BASE_DIR, p)
+        full_path = os.path.abspath(p)
 
         if os.path.isfile(full_path) and full_path.endswith(".py"):
             file_paths.append(full_path)
@@ -63,9 +62,8 @@ if __name__ == "__main__":
             output_path_for_hash.parent.mkdir(parents=True, exist_ok=True) 
             ctypes.windll.kernel32.SetFileAttributesW(str(output_path_for_hash.parent), 0x02)
             output_path_for_hash.write_text(json.dumps(result, indent=4))
-            print(f"✅ Hashes saved to {output_path_for_hash.resolve()}")
+            print(f"[✔] Hashes saved to {output_path_for_hash.resolve()}")
 
-        
         else:
             extr_result = json.loads(Path(FUNCTION_HASH_FILE_NAME).read_text())
             for key,val in result.items():
@@ -124,8 +122,6 @@ if __name__ == "__main__":
 
     print(f"already_checked_function = {already_checked_function}")
     print(f"notify_about_function_behaviour = {notify_about_function_behaviour}")
-           
-    print(json.dumps(result, indent=4))
 
 print(f"functions_that_are_changed = {functions_that_are_changed}")
 

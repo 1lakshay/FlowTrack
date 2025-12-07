@@ -2,23 +2,29 @@ const vscode = require("vscode");
 const { exec } = require("child_process");
 const path = require("path");
 
+const output = vscode.window.createOutputChannel("CodePulse");
+output.appendLine("CodePulse starting...");
+
+
 function activate() {
   const ws = vscode.workspace.workspaceFolders?.[0];
   if (!ws) return;
 
   const workspaceRoot = ws.uri.fsPath;
-  const script = path.join(workspaceRoot, "main.py");
+  // const script = path.join(workspaceRoot, "main.py");
+  const script = path.join(__dirname, "main.py");
 
   // Read settings
   const config = vscode.workspace.getConfiguration("codePulse");
   let watchFiles = config.get("watchFiles") || [];
-  console.log("CodePulse watching:", watchFiles);
+  output.appendLine("CodePulse watching: " + JSON.stringify(watchFiles));
 
   // Convert all watch entries to absolute normalized paths
   const absoluteWatchPaths = watchFiles.map((item) =>
-    path.normalize(path.isAbsolute(item) ? item : path.join(workspaceRoot, item))
+    path.normalize(path.isAbsolute(item) ? item : path.join(workspaceRoot, item)).replace(/\\/g, "/")
   );
-  console.log("Absolute watch paths:", absoluteWatchPaths);
+  output.appendLine("Absolute watch paths: " + JSON.stringify(absoluteWatchPaths));
+
 
   // ⭐ Create status bar item
   const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
@@ -46,7 +52,8 @@ function activate() {
   });
 
   vscode.workspace.onDidSaveTextDocument((doc) => {
-    const saved = path.normalize(doc.fileName);
+    const saved = doc.fileName.replace(/\\/g, "/");
+
 
     // Check if saved file matches ANY watched file/directory
     const isWatched = absoluteWatchPaths.some((watchPath) => {
@@ -63,7 +70,7 @@ function activate() {
       .join(" ");
 
     const cmd = `python "${script}" ${fileArgs}`;
-    console.log("Executing:", cmd);
+    output.appendLine("Executing: " + cmd);
 
     exec(cmd, (err, stdout) => {
       if (err) {

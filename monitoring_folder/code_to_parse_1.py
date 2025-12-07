@@ -2,7 +2,6 @@ from code_to_parse import funct2
 
 def helper():
     a = 20 + 5
-    gh = 90
     return a 
 
 def caller():

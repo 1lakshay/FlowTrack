@@ -2,7 +2,7 @@
   "name": "thecodepulse",
   "displayName": "TheCodePulse",
   "description": "Monitors function logic changes to prevent runtime crashes in dependent code.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "icon": "images/cp.png",
   "publisher": "Lakshay",
   "engines": {

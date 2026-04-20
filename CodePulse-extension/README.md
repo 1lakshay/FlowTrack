@@ -23,9 +23,12 @@ Settings → Search “CodePulse” → Add Python directories to `codePulse.wat
 - Now just simple do your work, and CodePulse will be workign along with you to make your development go smooth.
 - Status bar alert will appear to give a expandable panel with affected functions.
 
+# Newly added features: 
+- Method based tracking is implemented
+
 # Limitations
 This is an early version. Please note:
-Only function-level tracking is supported (Python-only)
 Class methods, decorators, inheritance logic NOT analysed yet(Will be added in future releases)
 Does not guarantee catching all complex runtime behaviors
 This extension is meant as a helper, not a full static analyzer.
+

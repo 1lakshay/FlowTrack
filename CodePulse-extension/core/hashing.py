@@ -12,12 +12,17 @@ def get_function_hashes(filepath: str) -> Dict:
     normalizer = LogicNormalizer()
     hashes = {}
 
+    def _hash_func(name, func_node):
+        clean_func = normalizer.visit(ast.fix_missing_locations(func_node))
+        ast_repr = ast.dump(clean_func, include_attributes=False)
+        hashes[name] = hashlib.sha256(ast_repr.encode()).hexdigest()
+
     for node in tree.body:
         if isinstance(node, ast.FunctionDef):
-            # normalize function AST (ignore print/log/constants)
-            clean_func = normalizer.visit(ast.fix_missing_locations(node))
-            ast_repr = ast.dump(clean_func, include_attributes=False)
-            func_hash = hashlib.sha256(ast_repr.encode()).hexdigest()
-            hashes[node.name] = func_hash
+            _hash_func(node.name, node)
+        elif isinstance(node, ast.ClassDef):
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef):
+                    _hash_func(f"{node.name}.{item.name}", item)
 
     return hashes

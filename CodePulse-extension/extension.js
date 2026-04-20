@@ -72,10 +72,20 @@ function activate() {
     const cmd = `python "${script}" ${fileArgs}`;
     output.appendLine("Executing: " + cmd);
 
-    exec(cmd, (err, stdout) => {
+    exec(cmd, (err, stdout, stderr) => {
+      output.show(true);   // reveal panel, keep focus on editor
       if (err) {
+        output.appendLine("--- ERROR ---");
+        output.appendLine(err.message);
         vscode.window.showErrorMessage(`CodePulse error: ${err.message}`);
         return;
+      }
+
+      output.appendLine("--- OUTPUT ---");
+      output.appendLine(stdout.trim());
+      if (stderr.trim()) {
+        output.appendLine("--- STDERR ---");
+        output.appendLine(stderr.trim());
       }
 
       if (stdout.includes("SYNTAX_INVALID")) return;

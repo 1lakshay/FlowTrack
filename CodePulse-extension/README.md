@@ -24,7 +24,7 @@ Settings → Search “CodePulse” → Add Python directories to `codePulse.wat
 - Status bar alert will appear to give a expandable panel with affected functions.
 
 # Newly added features: 
-- Method based tracking is implemented
+- Method based tracking is being implemented
 
 # Limitations
 This is an early version. Please note:

@@ -5,9 +5,16 @@ class FunctionCallExtractor(ast.NodeVisitor):
         self.calls = set()
 
     def visit_Call(self, node):
-        # Check if the function being called is a simple name like foo()
+        # Simple call: funct2()
         if isinstance(node.func, ast.Name):
             self.calls.add(node.func.id)
+        # Method call: obj.some_method()
+        elif isinstance(node.func, ast.Attribute):
+            attr = node.func.attr
+            if isinstance(node.func.value, ast.Name):
+                self.calls.add(f"{node.func.value.id}.{attr}")
+            else:
+                self.calls.add(attr)
         self.generic_visit(node)
 
 class LogicNormalizer(ast.NodeTransformer):

@@ -62,7 +62,7 @@ if __name__ == "__main__":
             output_path_for_hash.parent.mkdir(parents=True, exist_ok=True) 
             ctypes.windll.kernel32.SetFileAttributesW(str(output_path_for_hash.parent), 0x02)
             output_path_for_hash.write_text(json.dumps(result, indent=4))
-            print(f"[✔] Hashes saved to {output_path_for_hash.resolve()}")
+            print(f"[OK] Hashes saved to {output_path_for_hash.resolve()}")
 
         else:
             extr_result = json.loads(Path(FUNCTION_HASH_FILE_NAME).read_text())
